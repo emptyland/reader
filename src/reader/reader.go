@@ -5,10 +5,16 @@ import (
 	"time"
 	"net/http"
 	"text/template"
+	"encoding/xml"
 
 	"appengine"
 	"appengine/user"
 	"appengine/datastore"
+	"appengine/urlfetch"
+
+	"code.google.com/p/go-charset/charset"
+	_ "code.google.com/p/go-charset/data"
+	rss "github.com/ungerik/go-rss"
 )
 
 var indexTemplate = template.Must(template.New("").ParseFiles("template/index.html"))
@@ -64,12 +70,39 @@ func checkOrNewUser(c appengine.Context, name string) error {
 }
 
 func handleAdd(w http.ResponseWriter, r *http.Request) {
-	//appengine.NewContext(r)
+	c := appengine.NewContext(r)
 
 	// if rss, err := r.FormValue("xmlUrl"); err != nil {
 	// 	http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 	// 	return
 	// }
-	rss := r.FormValue("xmlUrl")
-	fmt.Print(rss)
+	url := r.FormValue("xmlUrl")
+	// fmt.Print(rss)
+
+	channel, err := rssGet(c, url)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, `{ title: "%s", xmlUrl: "%s" }`, channel.Title, url)
+}
+
+func rssGet(c appengine.Context, url string) (*rss.Channel, error) {
+	client := urlfetch.Client(c);
+	response, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	xmlDecoder := xml.NewDecoder(response.Body)
+	xmlDecoder.CharsetReader = charset.NewReader
+
+	var rssInput struct {
+		Channel rss.Channel `xml:"channel"`
+	}
+	err = xmlDecoder.Decode(&rssInput)
+	if err != nil {
+		return nil, err
+	}
+	return &rssInput.Channel, nil
 }
