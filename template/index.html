@@ -38,38 +38,85 @@
 <div class="row-fluid">
 
 	<div class="span3">
-		<ul class="nav nav-list">
+		<ul class="nav nav-list" id="rssList">
 			<li><div class="input-append">
 				<input class="span12" id="newRss" type="text">
 				<button class="btn" type="button" onclick="onAddNewRss();" >Add</button>
 			</div></li>
 			<li class="nav-header">Title</li>
-			<li class="active"><a href="#">List-1</a></li>
-			<li><a href="#">List-2</a></li>
-			<li><a href="#">List-3</a></li>
-			<li><a href="#">List-4</a></li>
 		</ul>
 	</div>
 
-	<div class="span10">
-
+	<div class="span7" id="rssContent">
 	</div>
+
 </div>
 </div>
 
 <script>
+function onTitleClick(ctx) {
+	$(".subTitle").attr("class", "subTitle");
+
+	var target = ctx.currentTarget;
+	target.setAttribute("class", "subTitle active");
+	$.get("/get?title=" + $(target).text(), function (data, status) {
+		if (status == "success") {
+			var rv = eval("(" + data + ")");
+			console.log(rv);
+			$(".subBlock").remove();
+			var rssContent = $("#rssContent").get(0);
+			for (var i = 0; i < rv.Item.length; ++i) {
+				var item = rv.Item[i];
+				var html = "<div class=\"subBlock\">";
+				html += "<h3 class=\"text-left\"><a href=\"" + item.Link + "\">" + item.Title + "</a></h3>";
+				html += "<div class=\"subContext\">"
+				if (item.Content == "")
+					html += item.Description;
+				else
+					html += item.Content;
+				html += "</div><hr />"
+				$(rssContent).append(html);
+			}
+		}
+	});
+}
+
 function onAddNewRss() {
 	var xmlUrl = $("#newRss").get(0).value;
 	var ajax = new XMLHttpRequest();
-	ajax.open("POST", "add?xmlUrl=" + xmlUrl)
+	ajax.open("POST", "add?xmlUrl=" + xmlUrl);
 	ajax.onreadystatechange = function () {
 		if (ajax.readyState == 4 &&
 			ajax.status == 200) {
-			//console.log(ajax.responseText)
+
+			var rv = eval("(" + ajax.responseText + ")");
+			$("#rssList").append("<li class=\"subText\"><a href=\"#\">" + rv.title + "</a></li>")
 		}
 	};
 	ajax.send();
 }
+
+function listAllRss() {
+	// Clear first
+	$(".subTitle").remove();
+	var ajax = new XMLHttpRequest();
+	ajax.open("POST", "list");
+	ajax.onreadystatechange = function () {
+		if (ajax.readyState == 4 &&
+			ajax.status == 200) {
+
+			var rv = eval("(" + ajax.responseText + ")");
+			var rssList = $("#rssList");
+			for (var i = 0; i < rv.length; ++i) {
+				rssList.append("<li class=\"subTitle\"><a href=\"#\">" + rv[i].title + "</a></li>");	
+			}
+			$(".subTitle").click(null, onTitleClick);
+		}
+	};
+	ajax.send();
+}
+
+listAllRss();
 
 </script>
 </body>
