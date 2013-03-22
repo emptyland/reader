@@ -7,7 +7,7 @@ handlers:
   - url: /
     script: _go_app
     login: required
-  - url: /add
+  - url: /(add|list|get)
     script: _go_app
     login: required
   - url: /(.*\.(html|png|css|js|ico))
