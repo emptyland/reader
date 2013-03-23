@@ -32,6 +32,7 @@ type Item struct {
 	Comments    string        `xml:"comments"`
 	PubDate     Date          `xml:"pubDate"`
 	GUID        string        `xml:"guid"`
+	Image       string        `xml:"image"`
 	Category    []string      `xml:"category"`
 	Enclosure   ItemEnclosure `xml:"enclosure"`
 	Description string        `xml:"description"`

@@ -5,26 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bootstrap -->
 <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+<style type="text/css">
+.subBlock {
+	-webkit-box-shadow: rgba(0, 0, 0, 0.2) 0px 1px 8px;
+	padding: 34px;
+	margin-bottom: 17px;
+}
+</style>
 </head>
 
 <body>
 <script src="js/jquery.js"></script>
 <script src="js/bootstrap.min.js"></script>
 
-<a href="https://github.com/emptyland/reader">
-	<img style="position: absolute; top: 0; left: 0; border: 0; zoom: 0.7;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_green_007200.png" alt="Fork me on GitHub">
-</a>
-
 <!-- Title -->
-<div class="navbar navbar-inverse">
+<div class="navbar navbar-inverse navbar-fixed-top">
+	<a href="https://github.com/emptyland/reader"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" alt="Fork me on GitHub"></a>
 	<div class="navbar-inner">
 		<div class="container">
 			<span class="brand">//Go RSS Reader</span>
-			<ul class="nav">
-			<li class="brand" id="msgBoard">
-				<!-- <span class="label label-info" id="msgOutput">Info</span> -->
-			</li>
-			</ul>
+			<a class="brand" href="https://github.com/emptyland/reader">//Github</a>
 
 			<ul class="nav pull-right">
 			<li>
@@ -33,7 +33,6 @@
 				<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a href="{{.LogoutURL}}"><i class="icon-share-alt"></i> Logout</a></li>
-					<li class="divider"></li>
 				</ul>
 			</div>
 			</li>
@@ -48,16 +47,24 @@
 <div class="row-fluid">
 
 	<div class="span3">
-		<ul class="nav nav-list" id="rssList">
-			<li><div class="input-append">
-				<input class="span12" id="newRss" type="text">
-				<button class="btn" type="button" onclick="onAddNewRss();" >Add</button>
-			</div></li>
+		<ul class="nav nav-list affix" id="rssList" style="top: 70px;">
+			<li>
+			<button class="btn btn-info" onclick="onBtnNewSubscription();"> New subscription</button>
+			<button class="btn btn-success" onclick="onBtnRefresh();"> Refresh</button>
+			<button class="btn btn-warning" onclick="onBtnDelete();"> Delete</button>
+			</li>
+			<li>
+			<div class="input-append" id="addSubscriptionBox" style="margin-top: 10px; display: none;">
+				<input class="span10" id="newRssInput"type="text">
+				<button class="btn" onclick="onAddSubscription();">Add</button>
+				<button class="btn" onclick="onCancelAddSubscription();">Cancel</button>
+			</div>
+			</li>
 			<li class="nav-header">Title</li>
 		</ul>
 	</div>
 
-	<div class="span7" id="rssContent">
+	<div class="span9" id="rssContent" style="margin-top: 70px;">
 	</div>
 
 </div>
@@ -65,34 +72,34 @@
 
 <script>
 function toMsgBoard(cat, msg) {
-	$("#msgOutput").remove();
-	$("#msgBoard").append("<span class=\"label label-" + cat
-		+ "\" id=\"msgOutput\">" + msg + "</span>");
+	// $(".subBlock").remove(); // Clear all rss content
+	// $("#msgOutput").remove();
+	// $("#rssContent").append("<span class=\"label label-" + cat + "\" id=\"msgOutput\" style=\"text-align: center;\">" + msg + "</span>");
 }
 
 function onSubReceived(data, status) {
 	if (status != "success") {
-		toMsgBoard("important", "Fetching fail!");
+		toMsgBoard("important", "Loading fail!");
 		return;
 	}
 
 	var rv = eval("(" + data + ")");
-	$(".subBlock").remove(); // Clear all rss content
 	var rssContent = $("#rssContent").get(0);
+	$(".subBlock").remove(); // Clear all rss content
 	for (var i = 0; i < rv.Item.length; ++i) {
 		var item = rv.Item[i];
 		var html = "<div class=\"subBlock\">";
-		html += "<h3 class=\"text-left\"><a href=\"" + item.Link 
-			+ "\" target=\"_blank\">" + item.Title + "</a></h3>";
+		html += "<h3 class=\"text-left\"><a href=\"" + item.Link + "\" target=\"_blank\">" + item.Title + "</a></h3>";
 		html += "<div class=\"subContext\">"
+		if (typeof item.Image == "string")
+			html += "<p style=\"text-align: center;\"><img src=\"" + item.Image + "\"></img></p>";
 		if (item.Content == "")
 			html += item.Description;
 		else
 			html += item.Content;
-		html += "</div><hr />"
+		html += "</div>"
 		$(rssContent).append(html);
 	}
-	toMsgBoard("success", "OK");
 }
 
 function onTitleClick(ctx) {
@@ -101,23 +108,60 @@ function onTitleClick(ctx) {
 	var target = ctx.currentTarget;
 	target.setAttribute("class", "subTitle active");
 	$.get("/get?title=" + $(target).text(), onSubReceived);
-	toMsgBoard("info", "Fetching...")
+	toMsgBoard("info", "Loading...")
 }
 
-function onAddNewRss() {
-	var xmlUrl = $("#newRss").get(0).value;
-	var ajax = new XMLHttpRequest();
+function onBtnRefresh() {
+	var title = $(".subTitle.active").text();
+	if (typeof title != "string" || title === "")
+		return;
+
+	$.get("/get?title=" + title, onSubReceived);
+	toMsgBoard("info", "Loading...");
+}
+
+function onBtnDelete() {
+	var title = $(".subTitle.active").text();
+	if (typeof title != "string" || title === "")
+		return;
+
+	$.post("/delete?title=" + title, function (data, status) {
+		if (status == "success") {
+			$(".subBlock").remove(); // Clear all rss content
+			listAllRss();
+		} else {
+			toMsgBoard("important", "Delete fail");
+		}
+	});
+}
+
+function onBtnNewSubscription() {
+	var display = $("#addSubscriptionBox").css("display");
+
+	if (display === "" || display === "inline-block")
+		$("#addSubscriptionBox").css("display", "none");
+	else
+		$("#addSubscriptionBox").css("display", "");
+}
+
+function onAddSubscription() {
+	var xmlUrl = $("#newRssInput").get(0).value;
 	$.post("add?xmlUrl=" + xmlUrl, function (data, status) {
 		if (status == "success") {
-			var rv = eval("(" + ajax.responseText + ")");
-			$("#rssList").append("<li class=\"subText\"><a href=\"#\">"
-				+ rv.title + "</a></li>")
-			toMsgBoard("success", "OK");
+			var rv = eval("(" + data + ")");
+			$("#rssList").append("<li class=\"subTitle\"><a href=\"#\">" + rv.title + "</a></li>");
+			//$(".subTitle").click(null, onSubReceived);
+			//$(".subTitle").last().click();
+			$("#addSubscriptionBox").css("display", "none");
 		} else {
 			toMsgBoard("important", "Can not get this rss.");
 		}
 	});
-	toMsgBoard("info", "Fetching...")
+	toMsgBoard("info", "Loading...")
+}
+
+function onCancelAddSubscription() {
+	$("#addSubscriptionBox").css("display", "none");
 }
 
 function listAllRss() {
@@ -128,16 +172,15 @@ function listAllRss() {
 			var rv = eval("(" + data + ")");
 			var rssList = $("#rssList");
 			for (var i = 0; i < rv.length; ++i) {
-				rssList.append("<li class=\"subTitle\"><a href=\"#\">"
-					+ rv[i].title + "</a></li>");	
+				rssList.append("<li class=\"subTitle\"><a href=\"#\">" + rv[i].title + "</a></li>");	
 			}
-			$(".subTitle").click(null, onTitleClick);
-			$(".subTitle").first().attr("class", "subTitle active");
-			$.get("/get?title=" + $(".subTitle").first().text(), onSubReceived);
+			$(".subTitle").click(onTitleClick);
+			$(".subTitle").first().click();
 		}
 	});
 }
 
+// Main entry:
 listAllRss();
 
 </script>

@@ -23,10 +23,11 @@ import (
 var indexTemplate = template.Must(template.New("").ParseFiles("template/index.html"))
 
 func init() {
-	http.HandleFunc("/",     handleRoot)
-	http.HandleFunc("/add",  handleAdd)
-	http.HandleFunc("/list", handleList)
-	http.HandleFunc("/get",  handleGet)
+	http.HandleFunc("/",       handleRoot)
+	http.HandleFunc("/add",    handleAdd)
+	http.HandleFunc("/list",   handleList)
+	http.HandleFunc("/get",    handleGet)
+	http.HandleFunc("/delete", handleDelete)
 }
 
 func handleRoot(w http.ResponseWriter, r *http.Request) {
@@ -193,4 +194,18 @@ func handleGet(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Write(channel)
 	}
+}
+
+func handleDelete(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	title := r.FormValue("title")
+	u := user.Current(c)
+	key := datastore.NewKey(c, u.Email+".Subscriptions", title, 0, nil)
+	if err := datastore.Delete(c, key); err != nil {
+		http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+		return	
+	}
+
+	fmt.Fprintf(w, `{ Status: "ok", Title: "%s" }`, title)
 }
