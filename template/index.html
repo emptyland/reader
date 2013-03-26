@@ -24,13 +24,12 @@
 	<div class="navbar-inner">
 		<div class="container">
 			<span class="brand">//Go RSS Reader</span>
-			<a class="brand" href="https://github.com/emptyland/reader">//Github</a>
 
 			<ul class="nav pull-right">
 			<li>
 			<div class="btn-group">
-				<a class="btn btn-primary" href="#"><i class="icon-user icon-white"></i> {{.Email}}</a>
-				<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+				<a class="btn btn-primary" href="javascript:void(0);"><i class="icon-user icon-white"></i> {{.Email}}</a>
+				<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="javascript:void(0);"><span class="caret"></span></a>
 				<ul class="dropdown-menu">
 					<li><a href="{{.LogoutURL}}"><i class="icon-share-alt"></i> Logout</a></li>
 				</ul>
@@ -172,7 +171,7 @@ function listAllRss() {
 			var rv = eval("(" + data + ")");
 			var rssList = $("#rssList");
 			for (var i = 0; i < rv.length; ++i) {
-				rssList.append("<li class=\"subTitle\"><a href=\"#\">" + rv[i].title + "</a></li>");	
+				rssList.append("<li class=\"subTitle\"><a href=\"javascript:void(0);\">" + rv[i].title + "</a></li>");	
 			}
 			$(".subTitle").click(onTitleClick);
 			$(".subTitle").first().click();
