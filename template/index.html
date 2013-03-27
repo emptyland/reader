@@ -5,11 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bootstrap -->
 <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+<link href="css/flat-ui.css" rel="stylesheet">
 <style type="text/css">
 .subBlock {
 	-webkit-box-shadow: rgba(0, 0, 0, 0.2) 0px 1px 8px;
 	padding: 34px;
 	margin-bottom: 17px;
+}
+a {
+	text-decoration: none;
 }
 </style>
 </head>
@@ -27,13 +31,7 @@
 
 			<ul class="nav pull-right">
 			<li>
-			<div class="btn-group">
-				<a class="btn btn-primary" href="javascript:void(0);"><i class="icon-user icon-white"></i> {{.Email}}</a>
-				<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="javascript:void(0);"><span class="caret"></span></a>
-				<ul class="dropdown-menu">
-					<li><a href="{{.LogoutURL}}"><i class="icon-share-alt"></i> Logout</a></li>
-				</ul>
-			</div>
+				<span class="brand">{{.Email}} <a href="{{.LogoutURL}}">[logout]</a></span>
 			</li>
 			</ul>
 
@@ -55,7 +53,7 @@
 			<li>
 			<div class="input-append" id="addSubscriptionBox" style="margin-top: 10px; display: none;">
 				<input class="span10" id="newRssInput"type="text">
-				<button class="btn" onclick="onAddSubscription();">Add</button>
+				<button class="btn btn-primary" onclick="onAddSubscription();">Add</button>
 				<button class="btn" onclick="onCancelAddSubscription();">Cancel</button>
 			</div>
 			</li>
@@ -148,10 +146,12 @@ function onAddSubscription() {
 	$.post("add?xmlUrl=" + xmlUrl, function (data, status) {
 		if (status == "success") {
 			var rv = eval("(" + data + ")");
-			$("#rssList").append("<li class=\"subTitle\"><a href=\"#\">" + rv.title + "</a></li>");
-			//$(".subTitle").click(null, onSubReceived);
-			//$(".subTitle").last().click();
+			$("#rssList").append('<li class="subTitle"><a href="#">' + rv.title + "</a></li>");
 			$("#addSubscriptionBox").css("display", "none");
+
+			$(".subTitle").unbind("click");
+			$(".subTitle").click(onTitleClick);
+			$(".subTitle").last().click();
 		} else {
 			toMsgBoard("important", "Can not get this rss.");
 		}
@@ -171,8 +171,9 @@ function listAllRss() {
 			var rv = eval("(" + data + ")");
 			var rssList = $("#rssList");
 			for (var i = 0; i < rv.length; ++i) {
-				rssList.append("<li class=\"subTitle\"><a href=\"javascript:void(0);\">" + rv[i].title + "</a></li>");	
+				rssList.append('<li class="subTitle"><a href="#">' + rv[i].title + "</a></li>");	
 			}
+			$(".subTitle").unbind("click");
 			$(".subTitle").click(onTitleClick);
 			$(".subTitle").first().click();
 		}
