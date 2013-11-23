@@ -1,7 +1,7 @@
 application: 8p73ex
 version: 1
 runtime: go
-api_version: go1.1beta
+api_version: go1
 
 handlers:
   - url: /
