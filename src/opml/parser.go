@@ -13,7 +13,7 @@ type Parser struct {
 }
 
 func NewParser(reader io.Reader) *Parser {
-	parser := &Parser{ decoder: xml.NewDecoder(reader) }
+	parser := &Parser{decoder: xml.NewDecoder(reader)}
 	parser.Result.Body = new(Node)
 	return parser
 }
@@ -44,7 +44,7 @@ func (p *Parser) handleToken(token xml.Token) (*Node, error) {
 			return nil, nil
 		}
 
-		node := &Node { Attr : make(map[string]string) }
+		node := &Node{Attr: make(map[string]string)}
 		for _, attr := range v.Attr {
 			node.Attr[attr.Name.Local] = attr.Value
 		}

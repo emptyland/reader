@@ -1,19 +1,19 @@
 package reader
 
 import (
-	"fmt"
-	"time"
 	"bytes"
-	"net/http"
-	"text/template"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
+	"net/http"
+	"text/template"
+	"time"
 
 	"appengine"
 	"appengine/datastore"
+	"appengine/memcache"
 	"appengine/urlfetch"
 	"appengine/user"
-	"appengine/memcache"
 
 	"code.google.com/p/go-charset/charset"
 	_ "code.google.com/p/go-charset/data"
@@ -23,10 +23,10 @@ import (
 var indexTemplate = template.Must(template.New("").ParseFiles("template/index.html"))
 
 func init() {
-	http.HandleFunc("/",       handleRoot)
-	http.HandleFunc("/add",    handleAdd)
-	http.HandleFunc("/list",   handleList)
-	http.HandleFunc("/get",    handleGet)
+	http.HandleFunc("/", handleRoot)
+	http.HandleFunc("/add", handleAdd)
+	http.HandleFunc("/list", handleList)
+	http.HandleFunc("/get", handleGet)
 	http.HandleFunc("/delete", handleDelete)
 }
 
@@ -95,8 +95,8 @@ func handleAdd(w http.ResponseWriter, r *http.Request) {
 	if err := datastore.Get(c, key, &sub); err != nil {
 		// Not found, now put it in datastore.
 		if err == datastore.ErrNoSuchEntity {
-			sub.Title      = channel.Title
-			sub.XMLUrl     = url
+			sub.Title = channel.Title
+			sub.XMLUrl = url
 			sub.UpdateTime = time.Now()
 			datastore.Put(c, key, &sub)
 			json.NewEncoder(w).Encode(&sub)
@@ -105,7 +105,7 @@ func handleAdd(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// You have this subscription.
-		http.Error(w, "Duplicated subscription: " + channel.Title,
+		http.Error(w, "Duplicated subscription: "+channel.Title,
 			http.StatusInternalServerError)
 	}
 }
@@ -126,7 +126,7 @@ func handleList(w http.ResponseWriter, r *http.Request) {
 
 // Cached read rss
 func rssCachedGet(c appengine.Context, url string) ([]byte, error) {
-	item, err := memcache.Get(c, url);
+	item, err := memcache.Get(c, url)
 	if err != nil && err != memcache.ErrCacheMiss {
 		return nil, err
 	}
@@ -148,9 +148,9 @@ func rssCachedGet(c appengine.Context, url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	item = &memcache.Item {
-		Key: url,
-		Value: buf.Bytes(),
+	item = &memcache.Item{
+		Key:        url,
+		Value:      buf.Bytes(),
 		Expiration: expriation,
 	}
 	return item.Value, memcache.Set(c, item)
@@ -204,7 +204,7 @@ func handleDelete(w http.ResponseWriter, r *http.Request) {
 	key := datastore.NewKey(c, u.Email+".Subscriptions", title, 0, nil)
 	if err := datastore.Delete(c, key); err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
-		return	
+		return
 	}
 
 	fmt.Fprintf(w, `{ Status: "ok", Title: "%s" }`, title)

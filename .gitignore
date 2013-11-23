@@ -1,7 +1,8 @@
 junk
-app.yaml
 pkg/*
 bin/*
 .hg*
 *.o
 *.a
+src/github.com/*
+src/code.google.com/*
